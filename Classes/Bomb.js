@@ -1,4 +1,4 @@
-class Bomb extends Entity {
+ class Bomb extends Entity {
   constructor(x, y, width, height, drawWidth, drawHeight, power, id) {
     super(x, y, width, height, drawWidth, drawHeight);
     this.power = power;
@@ -15,7 +15,7 @@ class Bomb extends Entity {
       this.frame++;
     if (this.frame >= 3)
       this.frame = 0;
-    image(this.sprites[this.frame], this.x, this.y, this.drawWidth, this.drawHeight);
+    image(this.sprites[this.frame], this.pos.x, this.pos.y, this.drawSize.x, this.drawSize.y);
   }
   
   setup() {

@@ -15,6 +15,7 @@ class Bomber extends Entity {
     this.alphaLevel = 250;
   }
   
+  /*
   checkAllBlockCollisions() {
     let coord = checkBlockCollision(this);
     if (coord != null) {
@@ -25,6 +26,7 @@ class Bomber extends Entity {
     }
     return checkBlockCollision(this) != null || checkBombCollisionBomber(this);
   }
+  */
   
   cycle() {
     // UPDATING FRAME
@@ -44,15 +46,18 @@ class Bomber extends Entity {
     let img = this.sprites[this.orientation][this.frame];
     // DRAWING BOMBER
     if (this.live) {
-      if (this.orientation == 3) { // MIRRORING RIGHT FACING SIDE SPRITES FOR LEFT
+      // MIRRORING RIGHT FACING SIDE SPRITES FOR LEFT
+      if (this.orientation == 3) { 
         push();
         scale(-1, 1);
-        image(img, - this.x - this.drawWidth, this.y - this.drawHeight / 2, this.drawWidth, this.drawHeight);
+        image(img, - this.pos.x - this.drawSize.x, this.pos.y - this.drawSize.y / 2, this.drawSize.x, this.drawSize.y);
         pop();
+      // OTHER ORIENTATIONS ARE DRAWN REGULARLY
       } else {
-        image(img, this.x, this.y - this.drawHeight / 2, this.drawWidth, this.drawHeight);
+        image(img, this.pos.x, this.pos.y - this.drawSize.y / 2, this.drawSize.x, this.drawSize.y);
       }
-    } else { // TINTING BOMBER RED IF KILLED (SAME AS EXPLODING BLOCKS)
+    // TINTING BOMBER RED IF KILLED (SAME AS EXPLODING BLOCKS)
+    } else { 
       push();
       tint(250, this.tintLevel, this.tintLevel / 2, this.alphaLevel);
       this.time++;
@@ -63,17 +68,17 @@ class Bomber extends Entity {
       if (this.orientation == 3) {
         push();
         scale(-1, 1);
-        image(img, - this.x - this.drawWidth, this.y - this.drawHeight / 2, this.drawWidth, this.drawHeight);
+        image(img, - this.pos.x - this.drawSize.x, this.pos.y - this.drawSize.y / 2, this.drawSize.x, this.drawSize.y);
         pop();
       } else {
-        image(img, this.x, this.y - this.drawHeight / 2, this.drawWidth, this.drawHeight);
+        image(img, this.pos.x, this.pos.y - this.drawSize.y / 2, this.drawSize.x, this.drawSize.y);
       }
       pop();
     }
     
     push();
     fill(255, 0, 0, 100);
-    rect(this.x, this.y , this.width, this.height);
+    rect(this.pos.x, this.pos.y , this.size.x, this.size.y);
     pop();    
 
   }
@@ -91,6 +96,7 @@ class Bomber extends Entity {
     }
   }
   
+  /*
   // returns true if bomber was able to walk, otherwise false.
   // this will be useful when extending class for baddies.
   update(orientation) {
@@ -99,44 +105,45 @@ class Bomber extends Entity {
     let speed = this.speed;
     while (speed > 0) {
       if (orientation == 0) {
-        this.y -= speed;
+        this.pos.y -= speed;
         if (this.checkAllBlockCollisions()) {
-          this.y += speed;
+          this.pos.y += speed;
           speed -= 1;
         } else {
-          this.y -= speed;
+          this.pos.y -= speed;
           return true;
         }
       } else if (orientation == 1) {
-        this.x += speed;
+        this.pos.x += speed;
         if (this.checkAllBlockCollisions()) {
-          this.x -= speed;
+          this.pos.x -= speed;
           speed -= 1;
         } else {
-          this.x += speed;
+          this.pos.x += speed;
           return true;
         }
       } else if (orientation == 2) {
-        this.y += speed;
+        this.pos.y += speed;
         if (this.checkAllBlockCollisions()) {
-          this.y -= speed;
+          this.pos.y -= speed;
           speed -= 1;
         } else {
-          this.y += speed;
+          this.pos.y += speed;
           return true;
         }
       } else if (orientation == 3) {
-        this.x -= speed;
+        this.pos.x -= speed;
         if (this.checkAllBlockCollisions()) {
-          this.x += speed;
+          this.pos.x += speed;
           speed -= 1;
         } else {
-          this.x -= speed;
+          this.pos.x -= speed;
           return true;
         }
       }
     }
     return false;
   }
+  */
   
 }

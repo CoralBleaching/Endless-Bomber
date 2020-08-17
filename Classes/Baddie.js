@@ -10,17 +10,20 @@ class Baddie extends Bomber {
   draw() {
     this.time++;
     let img = this.sprites[this.orientation][this.frame];
-    // DRAWING BOMBER
+    // DRAWING BADDIE
     if (this.live) {
-      if (this.orientation == 3) { // MIRRORING RIGHT FACING SIDE SPRITES FOR LEFT
+      // MIRRORING RIGHT FACING SIDE SPRITES FOR LEFT
+      if (this.orientation == 3) { 
         push();
         scale(-1, 1);
-        image(img, - this.x - this.drawWidth, this.y, this.drawWidth, this.drawHeight);
+        image(img, - this.pos.x - this.drawSize.x, this.pos.y, this.drawSize.x, this.drawSize.y);
         pop();
+      // OTHER ORIENTATIONS ARE DRAWN REGULARLY
       } else {
-        image(img, this.x, this.y, this.drawWidth, this.drawHeight);
+        image(img, this.pos.x, this.pos.y, this.drawSize.x, this.drawSize.y);
       }
-    } else { // TINTING BADDIE RED IF KILLED (SAME AS EXPLODING BLOCKS)
+    // TINTING BADDIE RED IF KILLED (SAME AS EXPLODING BLOCKS)
+    } else { 
       push();
       tint(250, this.tintLevel, this.tintLevel / 2, this.alphaLevel);
       this.time++;
@@ -31,17 +34,17 @@ class Baddie extends Bomber {
       if (this.orientation == 3) {
         push();
         scale(-1, 1);
-        image(img, -this.x - this.drawWidth, this.y, this.drawWidth, this.drawHeight);
+        image(img, - this.pos.x - this.drawSize.x, this.pos.y, this.drawSize.x, this.drawSize.y);
         pop();
       } else {
-        image(img, this.x, this.y, this.drawWidth, this.drawHeight);
+        image(img, this.pos.x, this.pos.y, this.drawSize.x, this.drawSize.y);
       }
       pop();
-    } 
- 
+    }
+    
     push();
     fill(255, 0, 0, 100);
-    rect(this.x, this.y , this.width, this.height);
+    rect(this.pos.x, this.pos.y , this.size.x, this.size.y);
     pop();    
 
   }
@@ -65,6 +68,7 @@ class Baddie extends Bomber {
     this.sprites[3].push(loadImage('Sprites/Creep/Creep_S_f06.png'));
   }
   
+  /*
   update(orientation) {
     this.cycle();
     this.orientation = orientation;
@@ -110,18 +114,12 @@ class Baddie extends Bomber {
     }
     return false;
   }
+  */
   
-  walkCycle() {
-    if (!this.update(this.orientation)) {
+  walkCycle(tiles, bombs) {
+    if (!this.update(tiles, bombs, this.orientation)) {
       this.pickOrientation();
     }
-  }
-  
-}
-
-class BaddieLv1 extends Baddie {
-  constructor(x, y, width, height, drawWidth, drawHeight) {
-    super(x, y, width, height, drawWidth, drawHeight);
   }
   
 }

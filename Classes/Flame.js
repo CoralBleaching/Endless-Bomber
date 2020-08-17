@@ -15,7 +15,7 @@ class Flame extends Entity {
     }
     if (this.frame >= 4)
       this.frame = 0;
-    image(this.sprites[this.frame], this.x, this.y, this.drawWidth, this.drawHeight);
+    image(this.sprites[this.frame], this.pos.x, this.pos.y, this.drawSize.x, this.drawSize.y);
   }
   
   setup() {

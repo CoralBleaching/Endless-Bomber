@@ -6,7 +6,7 @@ class Block extends Entity {
   }
   
   draw() {
-    image(this.img, this.x, this.y, this.width, this.height);
+    image(this.img, this.pos.x, this.pos.y, this.drawSize.x, this.drawSize.y);
   }
   
   setup() {
@@ -16,7 +16,7 @@ class Block extends Entity {
 
 class ExplodingTile extends Block {
   constructor(block) {
-    super(block.x, block.y, block.width, block.height, block.drawWidth, block.drawHeight, block.sprite);
+    super(block.pos.x, block.pos.y, block.size.x, block.size.y, block.drawSize.x, block.drawSize.y, block.sprite);
     this.time = 0;
     this.tintLevel = 0;
     this.alphaLevel = 250;
@@ -30,7 +30,7 @@ class ExplodingTile extends Block {
     }
     push();
     tint(250, this.tintLevel, this.tintLevel/2, this.alphaLevel);
-    image(this.img, this.x, this.y, this.width, this.height);
+    image(this.img, this.pos.x, this.pos.y, this.drawSize.x, this.drawSize.y);
     pop();
   }
 }

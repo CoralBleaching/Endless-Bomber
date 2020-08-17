@@ -1,16 +1,23 @@
-let bomber;
-let backgroundTiles = [];
-let tiles = [];
-let map, nMap;
-let explodingTiles = [];
-let bombs = [],
-  placedBomb = false,
-  bombWaitList = [];
-let flames = [];
-let baddies = [];
-let gameState;
-let userHasClicked = false;
 
+let bomber; // the playable character
+let backgroundTiles = []; // green tiles of the floor
+let tiles = []; // blocks
+let map, nMap; // matrixes with id information on stage layout
+let explodingTiles = []; // list of blocks that are in the process of being exploded
+let bombs = []; // list of bombs placed on the stage
+let placedBomb = false; // flag for tracking if a bomb has just been placed
+let flames = []; // list of flames
+let baddies = []; // list of antagonists
+let gameState; // current state of the game (menu, game over, run stage) 
+let userHasClicked = false; // tracks user clicking, useful for dealing with input locally in the code
+let userHasPressedSpacebar = false; // tracks spacebar hitting, useful for dealing with input locally the code
+
+
+//TEST VARIABLES
+let mousePlacingBomb = false;
+let bombSprite;
+
+// SPRITE LOCATIONS
 let backgroundSprite = 'Sprites/Block/BackgroundTile.png';
 let solidSprite = 'Sprites/Block/SolidBlock.png';
 let breakableSprite = 'Sprites/Block/ExplodableBlock.png';
@@ -27,13 +34,25 @@ function initializeVariables() {
   bombWaitList = [];
   flames = [];
   baddies = [];
+  userHasClicked = false;
+  userHasPressedSpacebar = false;
   
+  //TESTING VARIABLES
+  mousePlacingBomb = false;
+  
+  // resetting tile map
   for (let i = 0; i < 15; i++) {
     tiles[i] = [];
     tiles[i][14] = null;
   }
 }
 
+// MAKING SURE SOME SPRITES WILL LOAD
+function preload() {
+  bombSprite = loadImage('Sprites/Bomb/Bomb_f02.png');
+}
+
+// ENGINE START
 function setup() {
   createCanvas(750, 750);
   
@@ -43,7 +62,7 @@ function setup() {
   gameState = 'run stage'; 
 }
 
-
+// MAING GAME LOOP
 function draw() {
   background(0);
   if (gameState == 'main menu') {
@@ -119,10 +138,15 @@ function setupStage() {
   bomber = new Bomber(50, 50, 50, 50, 50, 100);
   bomber.setup();
   
+  // generating information matrix for stage generation
   map = buildMap();
   nMap = populateMap(map);
-    
+  
+  // suffix for labelling the baddies
   let baddieCounter = 0;
+  
+  // build the tile array based on information matrix generated on map and nMap
+  // also create and place the baddies
   for (let i = 0; i < 15; i++) {
     for (let j = 0; j < 15; j++) {
       backgroundTiles.push(new Block(i * 50, j * 50, 50, 50, 50, 50, backgroundSprite));
@@ -133,11 +157,11 @@ function setupStage() {
       } else if (map[i][j] == 'o') {
         tiles[i][j] = new Block(i * 50, j * 50, 50, 50, 50, 50, breakableSprite);
         tiles[i][j].setup();
-      } else if (nMap[i][j] == 'e') {
+      }/* else if (nMap[i][j] == 'e') {
         baddies.push(new Baddie(i * 50, j * 50, 50, 50, 50, 50, 'baddie' + baddieCounter));
         baddies[baddies.length - 1].setup();
         baddieCounter++;
-      }
+      }*/
     }
   }
   
@@ -145,6 +169,7 @@ function setupStage() {
 
 function runStage() {
   
+  // DRAWING FLOOR
   backgroundTiles.forEach(tile => tile.draw());
   for (let i = 0; i < 15; i++) {
     for (let j = 0; j < 15; j++) {
@@ -161,7 +186,7 @@ function runStage() {
       if (bombs[i].id == 'bomber')
         bomber.bombCounter--;
       else {
-        baddies.forEach(function(baddie) {
+        baddies.forEach(baddie => {
           if (bombs[i].id == baddie.id)
             baddie.bombCounter--;
         });
@@ -181,14 +206,14 @@ function runStage() {
 
   // EXHAUSTING FLAMES & CHECKING FLAME COLLISION WITH CHARACTERS
   for (let i = 0; i < flames.length; i++) {
-    // checking collision with bomber
-    if (bomber.live && bomber.collide(flames[i])) {
+    // checking collision with bomber 
+    if (bomber.live && bomber.checkGeneralCollision(flames[i])) {
       bomber.time = 0;
       bomber.live = false;
     }
     // checking collision with baddies
     baddies.forEach(function(baddie) {
-      if (baddie.live && baddie.collide(flames[i])) {
+      if (baddie.live && baddie.checkGeneralCollision(flames[i])) {
         baddie.time = 0;
         baddie.live = false;
       }
@@ -200,7 +225,7 @@ function runStage() {
   
   // CHECKING FOR BOMBER COLLISION WITH BADDIES
   baddies.forEach(function(baddie) {
-    if (bomber.live && bomber.collide(baddie)) {
+    if (bomber.live && bomber.checkGeneralCollision(baddie)) {
       bomber.time = 0;
       bomber.live = false;
     }
@@ -210,8 +235,8 @@ function runStage() {
 
   flames.forEach(flame => flame.draw());
 
-  // DRAWING BADDIES CHECKING FOR BADDIES KILLED
-  baddies.forEach(baddie => {if (baddie.live) baddie.walkCycle()});
+  // DRAWING BADDIES, UPDATING/CYCLING THEM AND CHECKING FOR BADDIES KILLED
+  baddies.forEach(baddie => {if (baddie.live) baddie.walkCycle(tiles, bombs)});
   
   for (let i = 0; i < baddies.length; i++) {
     if (!baddies[i].live) {
@@ -238,21 +263,21 @@ function runStage() {
   if (bomber.live) {
     // MOVING BOMBER
     if (keyIsDown(UP_ARROW)) {
-      bomber.update(0);
+      bomber.update(tiles, bombs, 0);
     } else if (keyIsDown(RIGHT_ARROW)) {
-      bomber.update(1);
+      bomber.update(tiles, bombs, 1);
     } else if (keyIsDown(DOWN_ARROW)) {
-      bomber.update(2);
+      bomber.update(tiles, bombs, 2);
     } else if (keyIsDown(LEFT_ARROW)) {
-      bomber.update(3);
+      bomber.update(tiles, bombs, 3);
     }
   
     // PLACING BOMBS
-    if (keyIsDown(32)) {
+    if (userHasPressedSpacebar) {
       if (placedBomb == false) {
         if (bomber.bombCounter < bomber.bombs) {
-          let x = bomber.x;
-          let y = bomber.y + bomber.height / 4;
+          let x = bomber.pos.x;
+          let y = bomber.pos.y;
           // NEED TO FIX THIS CALCULATION!!!
           x = Math.floor(x / 50) * 50;
           y = Math.floor(y / 50) * 50;
@@ -266,15 +291,52 @@ function runStage() {
     }
   }
   
+  userHasPressedSpacebar = false;
+  
   push();
   if (placedBomb) {
-    fill('red');
+    fill('green');
   } 
   else {
-    fill('green');
+    fill('red');
   }
   rect(20, 20, 20, 20);
   pop();
+  
+  
+  
+  if (mousePlacingBomb) {
+    if (userHasClicked) {
+      let tempBomber = new Bomber(mouseX, mouseY, 50, 50, 50, 100);
+      if (tempBomber.checkBlockCollision(tiles, bombs)) {
+        let x = Math.floor(mouseX / 50) * 50;
+        let y = Math.floor(mouseY / 50) * 50;
+        let tempBomb = new Bomb(x, y, 50, 50, 50, 50, 2, 'user');
+        tempBomb.setup();
+        bombs.push(tempBomb);
+        mousePlacingBomb = false;
+      }
+    }
+  }
+  
+  push();
+  fill(0, 100, 255);
+  rect(60, 20, 20, 20);
+  pop();
+  image(bombSprite, 60, 20, 20, 20);
+  let bombButton = new Button(60, 20, 20, 20, '', 0);
+  if (bombButton.mouseHovering() && userHasClicked) {
+    mousePlacingBomb = true;
+  }
+  if (mousePlacingBomb) {
+    push();
+    fill(0, 0, 255, 180);
+    rect(60, 20, 20, 20);
+    pop();
+  }
+  
+  userHasClicked = false;
+  
 }
 
 // UTILITY FUNCTIONS
@@ -283,6 +345,13 @@ function mouseClicked() {
   userHasClicked = true;
 }
 
+function keyPressed() {
+  if (keyCode == 32) {
+    userHasPressedSpacebar = true;
+  }
+}
+
+/*
 function checkBlockCollision(entity) {
   // since we'll perform this check twice I'll wrap this part in a lambda function (IIFE)
   const lambdaCheckCollision = (x, y) => {
@@ -323,7 +392,9 @@ function checkBlockCollision(entity) {
   if (check != null) return check;
   return null;
 }
+*/
 
+/*
 function checkBombCollisionBaddie(entity) {
   let i = 0;
   // check collision with all bombs
@@ -334,7 +405,9 @@ function checkBombCollisionBaddie(entity) {
   }
   // note: we still need to check if player has put the bomb directly below the baddie! 
 }
+*/
 
+/*
 function checkBombCollisionBomber(entity) {
   let last = bombs.length - 1;
   if (placedBomb) {
@@ -352,13 +425,14 @@ function checkBombCollisionBomber(entity) {
         return true;
       }
     }
-  }
+  } 
   return false;
 }
+*/
  
 function explodeBomb(bomb) {
 
-  flames.push(new Flame(bomb.x, bomb.y, 50, 50, 50, 50));
+  flames.push(new Flame(bomb.pos.x, bomb.pos.y, 50, 50, 50, 50));
   flames[flames.length - 1].setup();
   let flame;
   for (let direction = 0; direction < 4; direction++) {
@@ -367,13 +441,13 @@ function explodeBomb(bomb) {
       // if flame is validated buildFlame() will push it into the list for drawing.
       // if buildFlame() returns false the flame was not validated.
       if (direction == 0)
-        flame = new Flame(bomb.x, bomb.y - 50 * i, 50, 50, 50, 50);
+        flame = new Flame(bomb.pos.x, bomb.pos.y - 50 * i, 50, 50, 50, 50);
       else if (direction == 1)
-        flame = new Flame(bomb.x + 50 * i, bomb.y, 50, 50, 50, 50);
+        flame = new Flame(bomb.pos.x + 50 * i, bomb.pos.y, 50, 50, 50, 50);
       else if (direction == 2)
-        flame = new Flame(bomb.x, bomb.y + 50 * i, 50, 50, 50, 50);
+        flame = new Flame(bomb.pos.x, bomb.pos.y + 50 * i, 50, 50, 50, 50);
       else if (direction == 3)
-        flame = new Flame(bomb.x - 50 * i, bomb.y, 50, 50, 50, 50);
+        flame = new Flame(bomb.pos.x - 50 * i, bomb.pos.y, 50, 50, 50, 50);
       if (!buildFlame(flame))
         break;
     }
@@ -383,23 +457,23 @@ function explodeBomb(bomb) {
 function buildFlame(flame) {
 
   // breaking blocks if touching flames
-  let coordinates = checkBlockCollision(flame);
-  if (coordinates != null){
+  let [gridX, gridY] = [Math.floor(flame.pos.x / 50), Math.floor(flame.pos.y) / 50];
+  if (map[gridX][gridY] == 'o') {
     // if flames touch a breakable tile, destroy it and explode it. Stop flames.
-    if (map[coordinates[0]][coordinates[1]] == 'o') {
-      map[coordinates[0]][coordinates[1]] = ' ';
-      let tempTile = tiles[coordinates[0]][coordinates[1]];
-      tiles[coordinates[0]][coordinates[1]] = null;
-      tempTile = new ExplodingTile(tempTile);
-      tempTile.setup();
-      explodingTiles.push(tempTile);
-    }
+    map[gridX][gridY] = ' ';
+    let tempTile = tiles[gridX][gridY];
+    tempTile = new ExplodingTile(tempTile);
+    tempTile.setup();
+    explodingTiles.push(tempTile);
     return false;
-  }
-
+  } 
+  // if flames touch a solid tile, stop flames.
+  else if (map[gridX][gridY] == 'w')
+    return false;
+  
   // if flames touch a bomb, explode bomb and stop flames.
   for (let i = 0; i < bombs.length; i++) {
-    if (flame.collide(bombs[i])) {
+    if (flame.checkGeneralCollision(bombs[i])) {
       bombs[i].time = 201; // this does the trick neatly
       return false;
     }
